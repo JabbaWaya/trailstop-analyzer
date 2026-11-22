@@ -1,0 +1,13 @@
+name: finance_calculator
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - scipy
+  - plotly
+  - streamlit
+  - yfinance
+  - requests
+  - pytest

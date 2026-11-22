@@ -1,0 +1,20 @@
+# Local conda environment
+.conda/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Streamlit / editor / Claude local settings
+.streamlit/secrets.toml
+.claude/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Exported results
+trailing_stop_*.csv
