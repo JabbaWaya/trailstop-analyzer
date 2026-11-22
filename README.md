@@ -1,43 +1,43 @@
 # trailstop-analyzer
 
-Interactive risk analysis for trailing stops. Enter an ISIN, and the app finds the security, loads its price history and works out **how far below the price a trailing stop should sit** so that it does *not* trigger within a chosen period (default: 95 % probability over the next 10 trading days).
+Interaktive Risikoanalyse für Trailing Stops. Nach Eingabe einer ISIN sucht die App das Wertpapier, lädt die Kurshistorie und berechnet, **wie weit unter dem Kurs ein Trailing Stop liegen sollte**, damit er innerhalb eines gewählten Zeitraums *nicht* auslöst (Standard: 95 % Wahrscheinlichkeit über die nächsten 10 Börsentage).
 
-Instead of relying only on a volatility formula, it **simulates tens of thousands of price paths** with three models (Markov chain, historical block bootstrap, geometric Brownian motion) and checks the stop against each path, including intraday highs and lows. Closed-form formulas are shown next to the simulations for transparency.
+Statt sich nur auf eine Volatilitätsformel zu stützen, **simuliert die App zehntausende Kurspfade** mit drei Modellen (Markov-Kette, historischer Block-Bootstrap, geometrische Brownsche Bewegung) und prüft den Stop auf jedem Pfad, einschließlich Tageshoch und Tagestief. Zur Nachvollziehbarkeit stehen die geschlossenen Formeln direkt neben den Simulationen.
 
-The app's interface is in German. The output follows four sections:
+Die Ausgabe folgt vier Abschnitten:
 
-| Section | Content |
+| Abschnitt | Inhalt |
 |---|---|
-| **I. Ausgangsdaten** | Current price, annual volatility (1 year and model history), real 52-week high/low, real 1-year maximum drawdown (closing prices and high→low) |
-| **II. Herleitung** | √T scaling of volatility, reflection principle (path factor 2), trailing-stop formula (Lévy), simulated stop distance per model, recommended distance and first stop price |
-| **III. Gegenrechnungen** | Half-life (days until the stop is hit with 50 % probability), comparison with the real 1-year max drawdown, probability of reaching that drawdown again within a year |
-| **IV. Strategisches Fazit** | Table: computed distance and rounded distance ±1/±2 percentage points, with stop price, trigger probability and half-life, CSV download |
+| **I. Ausgangsdaten** | Aktueller Kurs, Jahresvolatilität (1 Jahr und Modellhistorie), reales 52-Wochen-Hoch/-Tief, realer 1-Jahres-Max-Drawdown (Schlusskurse und Hoch→Tief) |
+| **II. Herleitung** | Wurzel-T-Skalierung der Volatilität, Reflexionsprinzip (Pfad-Faktor 2), Formel für den nachlaufenden Stop (Lévy), simulierter Stop-Abstand je Modell, empfohlener Abstand und erster Stop-Kurs |
+| **III. Gegenrechnungen** | Halbwertszeit (Tage, bis der Stop mit 50 % Wahrscheinlichkeit erreicht ist), Abgleich mit dem realen 1-Jahres-Max-Drawdown, Wahrscheinlichkeit, diesen Drawdown innerhalb eines Jahres erneut zu erreichen |
+| **IV. Strategisches Fazit** | Tabelle: berechneter Abstand sowie gerundeter Abstand ±1/±2 Prozentpunkte mit Stop-Kurs, Auslösewahrscheinlichkeit und Halbwertszeit, CSV-Download |
 
-How the numbers are derived is documented in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+Wie die Zahlen hergeleitet werden, ist in [docs/METHODIK.md](docs/METHODIK.md) beschrieben.
 
-> This is a statistical model calculation based on historical prices, not investment advice.
+> Statistische Modellrechnung auf Basis historischer Kurse, keine Anlageberatung.
 
 ---
 
-## Setup
+## Einrichtung
 
-Requires [Miniconda/Anaconda](https://docs.conda.io/). The environment lives inside the project folder (`.conda/`).
+Voraussetzung ist [Miniconda/Anaconda](https://docs.conda.io/). Die Umgebung liegt im Projektordner (`.conda/`).
 
 ```powershell
 conda env create -p .\.conda -f environment.yml
 ```
 
-The environment needs roughly 1–1.5 GB of disk space.
+Die Umgebung braucht etwa 1–1,5 GB Speicherplatz.
 
-## Start the app
+## App starten
 
 ```powershell
 .\.conda\python.exe -m streamlit run app.py
 ```
 
-The app opens at http://localhost:8501.
+Die App öffnet sich unter http://localhost:8501.
 
-## Run the tests
+## Tests ausführen
 
 ```powershell
 .\.conda\python.exe -m pytest -q tests
@@ -45,52 +45,52 @@ The app opens at http://localhost:8501.
 
 ---
 
-## Using the app
+## Bedienung
 
-### 1. Choose the security (sidebar)
+### 1. Wertpapier wählen (Seitenleiste)
 
-- **ISIN** – e.g. `IE00B4L5YC18`. The ISIN is checked for format and check digit.
-- **Börsenplatz / Ticker** – all listings found for the ISIN, sorted by preference (Xetra first, then other German exchanges, euro exchanges, others). If a listing returns no usable data, the app automatically falls back to the next one and shows a warning.
-- **Ticker manuell** – override with any Yahoo Finance symbol (e.g. `EUNM.DE`) if the lookup picks the wrong security.
-- **CSV-Upload** – use your own price file instead of an ISIN (see [CSV format](#csv-format)).
+- **ISIN** – z. B. `IE00B4L5YC18`. Format und Prüfziffer werden geprüft.
+- **Börsenplatz / Ticker** – alle zur ISIN gefundenen Listings, nach Präferenz sortiert (zuerst Xetra, dann andere deutsche Börsen, Euro-Börsen, Rest). Liefert ein Listing keine verwertbaren Daten, nimmt die App automatisch das nächste und zeigt einen Hinweis.
+- **Ticker manuell** – beliebiges Yahoo-Finance-Symbol (z. B. `EUNM.DE`), falls die Suche das falsche Wertpapier findet.
+- **CSV hochladen** – eigene Kursdatei statt ISIN (siehe [CSV-Format](#csv-format)).
 
-### 2. Set the analysis parameters
+### 2. Analyseparameter einstellen
 
-| Setting | Default | Meaning |
+| Einstellung | Standard | Bedeutung |
 |---|---|---|
-| Sicherheitsniveau | 0.95 | Probability that the stop does **not** trigger within the period |
-| Überwachungszeitraum | 10 | Period in trading days |
-| Historie für Modelle | 3 years | Price history used to fit the Markov chain and bootstrap and for the "model history" volatility |
-| Vola-Basis | 1 Jahr | Volatility used by the formulas and the GBM simulation: last year or the full model history |
-| Leitmodell | Markov-Kette | Model that sets the recommended stop distance (any simulation or formula can be chosen) |
-| Markttrend | Ohne Trend | *Without trend*: pure random walk (historical average return removed). *Historical trend*: keeps the average return |
+| Sicherheitsniveau | 0,95 | Wahrscheinlichkeit, dass der Stop im Zeitraum **nicht** auslöst |
+| Überwachungszeitraum | 10 | Zeitraum in Börsentagen |
+| Historie für Modelle | 3 Jahre | Kurshistorie für Markov-Kette und Bootstrap sowie für die Vola „Modellhistorie“ |
+| Vola-Basis | 1 Jahr | Volatilität für die Formeln und die GBM-Simulation: letztes Jahr oder gesamte Modellhistorie |
+| Leitmodell | Markov-Kette | Modell, das den empfohlenen Stop-Abstand bestimmt (jede Simulation und jede Formel wählbar) |
+| Markttrend | Ohne Trend | *Ohne Trend*: reiner Zufallspfad (historische Durchschnittsrendite entfernt). *Historischer Trend*: Durchschnittsrendite bleibt erhalten |
 
-**Simulationseinstellungen** (expander):
+**Simulationseinstellungen** (aufklappbar):
 
-| Setting | Default | Meaning |
+| Einstellung | Standard | Bedeutung |
 |---|---|---|
-| Anzahl Pfade | 10 000 | Simulated paths per model |
-| Simulationslänge | 504 days | Length of each path; half-lives longer than this are shown as "> 504" |
-| Markov-Zustände | 5 | Number of return buckets (states) in the Markov chain |
-| Mittlere Blocklänge | 5 days | Average block length in the bootstrap |
-| Zufalls-Seed | 42 | Fixed seed, so results are reproducible |
+| Anzahl Pfade | 10 000 | Simulierte Pfade je Modell |
+| Simulationslänge | 504 Tage | Länge jedes Pfads; längere Halbwertszeiten erscheinen als „> 504“ |
+| Markov-Zustände | 5 | Anzahl der Renditeklassen (Zustände) der Markov-Kette |
+| Mittlere Blocklänge | 5 Tage | Durchschnittliche Blocklänge im Bootstrap |
+| Zufalls-Seed | 42 | Fester Startwert, damit Ergebnisse reproduzierbar sind |
 
-Every change recalculates the page. Simulation results are cached, so switching the leading model or the confidence level is instant; changing history, paths or model settings re-runs the simulation (a few seconds).
+Jede Änderung berechnet die Seite neu. Simulationsergebnisse werden zwischengespeichert: Leitmodell oder Sicherheitsniveau zu wechseln geht sofort; Änderungen an Historie, Pfadanzahl oder Modelleinstellungen starten die Simulation neu (einige Sekunden).
 
-### 3. Read the results
+### 3. Ergebnisse lesen
 
-- **Top row:** recommended trailing distance, first stop price, trigger probability within the period, half-life.
-- **Section II table:** stop distance and implied σ-level for every method side by side.
-- **Chart "Wahrscheinlichkeit der Auslösung … je Stop-Abstand":** for any distance on the x-axis, how likely each model says the stop is hit within the period. Where a curve crosses the red line is that model's optimal distance.
-- **Expander "Simulierte Beispielpfade und Modelldetails":** sample paths with 5/50/95 % quantiles and the Markov transition matrix.
-- **Section III:** half-life per model with the trigger probability over time; histogram of simulated 1-year max drawdowns against the real one.
-- **Section IV:** final table and **"Vergleich aller Modelle"** with probability and half-life for every model. "Fazit als CSV herunterladen" saves it (semicolon-separated, decimal comma, opens directly in German Excel).
+- **Obere Kennzahlen:** empfohlener Trailing-Abstand, erster Stop-Kurs, Auslösewahrscheinlichkeit im Zeitraum, Halbwertszeit.
+- **Tabelle in Abschnitt II:** Stop-Abstand und zugehöriges σ-Niveau aller Methoden nebeneinander.
+- **Diagramm „Wahrscheinlichkeit der Auslösung … je Stop-Abstand“:** zeigt für jeden Abstand auf der x-Achse, wie wahrscheinlich jedes Modell eine Auslösung im Zeitraum hält. Wo eine Kurve die rote Linie schneidet, liegt der optimale Abstand dieses Modells.
+- **„Simulierte Beispielpfade und Modelldetails“** (aufklappbar): Beispielpfade mit 5/50/95 %-Quantilen und die Übergangsmatrix der Markov-Kette.
+- **Abschnitt III:** Halbwertszeit je Modell mit der Auslösewahrscheinlichkeit über die Zeit; Histogramm der simulierten 1-Jahres-Max-Drawdowns im Vergleich zum realen Wert.
+- **Abschnitt IV:** Fazit-Tabelle und **„Vergleich aller Modelle“** mit Wahrscheinlichkeit und Halbwertszeit für jedes Modell. „Fazit als CSV herunterladen“ speichert die Tabelle (Semikolon-getrennt, Dezimalkomma, öffnet direkt in deutschem Excel).
 
-### CSV format
+### CSV-Format
 
-At least a date column and a closing price; open/high/low are optional but strongly recommended (without them, trailing-stop triggers can only be simulated on closing prices, which understates the risk; the app warns about this).
+Mindestens eine Datumsspalte und ein Schlusskurs; Eröffnung/Hoch/Tief sind optional, aber dringend empfohlen. Ohne sie lassen sich Auslösungen nur auf Schlusskursen simulieren, was das Risiko unterschätzt; die App weist darauf hin.
 
-Recognised column names (case-insensitive): `Date/Datum`, `Open/Eröffnung`, `High/Hoch`, `Low/Tief`, `Close/Schluss/Schlusskurs/Kurs/Adj Close`. Comma or semicolon separators, German number formats (`1.234,50`) and dates (`31.12.2025`) are detected automatically.
+Erkannte Spaltennamen (Groß-/Kleinschreibung egal): `Date/Datum`, `Open/Eröffnung`, `High/Hoch`, `Low/Tief`, `Close/Schluss/Schlusskurs/Kurs/Adj Close`. Komma oder Semikolon als Trenner, deutsche Zahlen (`1.234,50`) und Datumsangaben (`31.12.2025`) werden automatisch erkannt.
 
 ```csv
 Datum;Eröffnung;Hoch;Tief;Schlusskurs
@@ -100,33 +100,33 @@ Datum;Eröffnung;Hoch;Tief;Schlusskurs
 
 ---
 
-## Project structure
+## Projektstruktur
 
 ```
-app.py                  Streamlit app (UI, charts, sections I–IV)
-environment.yml         Conda environment
+app.py                  Streamlit-App (Oberfläche, Diagramme, Abschnitte I–IV)
+environment.yml         Conda-Umgebung
 trailstop/
-  data.py               ISIN validation, ISIN → ticker (Yahoo search, OpenFIGI), price download, CSV import
-  stats.py              Volatility, 52-week high/low, max drawdown, daily (close, high, low) tuples
-  analytic.py           Closed-form formulas: √T scaling, reflection principle, Lévy trailing-stop formula, half-lives
-  models.py             Path generators: Markov chain, stationary block bootstrap, GBM with Brownian-bridge intraday range
-  engine.py             Trailing-stop evaluation on simulated paths (running max drawdown per path)
-  report.py             Common interface for simulations and formulas, number formatting, final table
-tests/test_core.py      Unit tests (formulas, simulation vs. formula, CSV import, statistics)
-docs/METHODOLOGY.md     Detailed description of data, models and formulas
-PLAN.md                 Original implementation plan
+  data.py               ISIN-Prüfung, ISIN → Ticker (Yahoo-Suche, OpenFIGI), Kursdownload, CSV-Import
+  stats.py              Volatilität, 52-Wochen-Hoch/-Tief, Max-Drawdown, Tages-Tupel (Schluss, Hoch, Tief)
+  analytic.py           Formeln: Wurzel-T, Reflexionsprinzip, Lévy-Formel für nachlaufende Stops, Halbwertszeiten
+  models.py             Pfadgeneratoren: Markov-Kette, stationärer Block-Bootstrap, GBM mit Brownscher Brücke
+  engine.py             Trailing-Stop-Auswertung auf simulierten Pfaden (laufender Max-Drawdown je Pfad)
+  report.py             Gemeinsame Schnittstelle für Simulationen und Formeln, Zahlenformat, Fazit-Tabelle
+tests/test_core.py      Unit-Tests (Formeln, Simulation vs. Formel, CSV-Import, Kennzahlen)
+docs/METHODIK.md        Ausführliche Beschreibung von Daten, Modellen und Formeln
+PLAN.md                 Ursprünglicher Umsetzungsplan
 ```
 
-## Data sources
+## Datenquellen
 
-- **Yahoo Finance** (via [yfinance](https://github.com/ranaroussi/yfinance)) for daily OHLC prices, adjusted for distributions.
-- **OpenFIGI** and Yahoo search to map an ISIN to exchange tickers.
+- **Yahoo Finance** (über [yfinance](https://github.com/ranaroussi/yfinance)) für tägliche OHLC-Kurse, um Ausschüttungen bereinigt.
+- **OpenFIGI** und Yahoo-Suche, um eine ISIN den Börsentickern zuzuordnen.
 
-Both are free and need no API key, but they can be rate-limited or incomplete. If a lookup fails, enter the ticker manually or upload a CSV.
+Beide sind kostenlos und brauchen keinen API-Schlüssel, können aber gedrosselt oder lückenhaft sein. Scheitert die Suche, den Ticker manuell eingeben oder eine CSV hochladen.
 
-## Limitations
+## Grenzen
 
-- Free data: occasional gaps or bad intraday highs/lows; the most recent day may be incomplete during trading hours.
-- Within a day the order of high and low is unknown; the simulation assumes 50/50.
-- The models only know the chosen history: regimes that never occurred in it (e.g. a crash in a calm 3-year window) are not represented.
-- No slippage or gap-through-stop execution prices are modelled; the analysis is about *whether* the stop triggers, not at which fill price.
+- Kostenlose Daten: gelegentliche Lücken oder fehlerhafte Tageshochs/-tiefs; der letzte Tag kann während der Handelszeit unvollständig sein.
+- Innerhalb eines Tages ist die Reihenfolge von Hoch und Tief unbekannt; die Simulation nimmt 50/50 an.
+- Die Modelle kennen nur die gewählte Historie: Marktphasen, die darin nicht vorkommen (z. B. ein Crash in einem ruhigen 3-Jahres-Fenster), sind nicht abgebildet.
+- Slippage und Ausführung unter dem Stop bei Kurslücken sind nicht modelliert; die Analyse betrifft, *ob* der Stop auslöst, nicht zu welchem Kurs ausgeführt wird.
