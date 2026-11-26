@@ -116,10 +116,10 @@ def main():
         
         security_level = st.slider(
             "Sicherheitsniveau",
-            min_value=90,
+            min_value=90.0,
             max_value=99.5,
-            value=95,
-            step=1,
+            value=95.0,
+            step=0.1,
             help="Gewünschte Wahrscheinlichkeit, dass der Stop NICHT ausgelöst wird"
         )
         
